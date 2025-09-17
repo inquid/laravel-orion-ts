@@ -44,6 +44,24 @@ describe('Orion tests', () => {
 		expect(Orion.getToken()).toBeNull();
 	});
 
+	test('setting single custom header', () => {
+		Orion.setHeader('x-custom-header', 'header value');
+
+		const config = Orion.getHttpClientConfig();
+		expect(config.headers && (config.headers as any)['x-custom-header']).toBe('header value');
+	});
+
+	test('setting multiple custom headers', () => {
+		Orion.setHeaders({
+			'x-custom-header': 'header value',
+			'x-custom-header2': 'header value2',
+		});
+
+		const config = Orion.getHttpClientConfig();
+		expect(config.headers && (config.headers as any)['x-custom-header']).toBe('header value');
+		expect(config.headers && (config.headers as any)['x-custom-header2']).toBe('header value2');
+	});
+
 	test('appending slash to the end when getting api url', () => {
 		Orion.setBaseUrl('https://example.com/api');
 
