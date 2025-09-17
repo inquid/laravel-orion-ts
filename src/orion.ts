@@ -7,6 +7,7 @@ export class Orion {
 	protected static prefix: string;
 	protected static authDriver: AuthDriver;
 	protected static token: string | null = null;
+	protected static customHeaders: Record<string, string> = {};
 
 	protected static httpClientConfig: AxiosRequestConfig;
 	protected static makeHttpClientCallback: (() => AxiosInstance) | null = null;
@@ -76,6 +77,34 @@ export class Orion {
 		return Orion.token;
 	}
 
+	public static setHeader(name: string, value: string): Orion {
+		Orion.customHeaders[name] = value;
+		Orion.httpClientConfig = Orion.buildHttpClientConfig();
+		return Orion;
+	}
+
+	public static setHeaders(headers: Record<string, string>): Orion {
+		Orion.customHeaders = { ...Orion.customHeaders, ...headers };
+		Orion.httpClientConfig = Orion.buildHttpClientConfig();
+		return Orion;
+	}
+
+	public static getHeaders(): Record<string, string> {
+		return { ...Orion.customHeaders };
+	}
+
+	public static removeHeader(name: string): Orion {
+		delete Orion.customHeaders[name];
+		Orion.httpClientConfig = Orion.buildHttpClientConfig();
+		return Orion;
+	}
+
+	public static clearHeaders(): Orion {
+		Orion.customHeaders = {};
+		Orion.httpClientConfig = Orion.buildHttpClientConfig();
+		return Orion;
+	}
+
 	public static getHttpClientConfig(): AxiosRequestConfig {
 		return this.httpClientConfig;
 	}
@@ -108,10 +137,14 @@ export class Orion {
 			withCredentials: Orion.getAuthDriver() === AuthDriver.Sanctum,
 		};
 
+		const headers: Record<string, string> = { ...Orion.customHeaders };
+
 		if (Orion.getToken()) {
-			config.headers = {
-				Authorization: `Bearer ${Orion.getToken()}`,
-			};
+			headers.Authorization = `Bearer ${Orion.getToken()}`;
+		}
+
+		if (Object.keys(headers).length > 0) {
+			config.headers = headers;
 		}
 
 		return config;
