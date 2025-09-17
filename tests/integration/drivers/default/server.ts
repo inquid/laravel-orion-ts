@@ -32,6 +32,12 @@ export default function makeServer() {
 				return [];
 			});
 
+			// Generic test endpoint for header testing
+			this.get('/api/test-endpoint', () => ({ success: true }));
+			this.post('/api/test-endpoint', () => ({ success: true }));
+			this.patch('/api/test-endpoint', () => ({ success: true }));
+			this.del('/api/test-endpoint', () => ({ success: true }));
+
 			this.get('/api/posts');
 
 			this.post('/api/posts', function (schema: any, request) {
