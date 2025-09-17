@@ -7,6 +7,8 @@ export class Orion {
 	protected static prefix: string;
 	protected static authDriver: AuthDriver;
 	protected static token: string | null = null;
+	// Custom headers that should be sent with every request made by Orion's HttpClient
+	protected static headers: Record<string, string> = {};
 
 	protected static httpClientConfig: AxiosRequestConfig;
 	protected static makeHttpClientCallback: (() => AxiosInstance) | null = null;
@@ -72,6 +74,39 @@ export class Orion {
 		return Orion;
 	}
 
+	/**
+	 * Set a single custom header that will be sent with every request.
+	 *
+	 * @param key   Header name
+	 * @param value Header value
+	 */
+	public static setHeader(key: string, value: string): Orion {
+		Orion.headers[key] = value;
+		Orion.httpClientConfig = Orion.buildHttpClientConfig();
+
+		return Orion;
+	}
+
+	/**
+	 * Replace the currently configured custom headers with the provided headers object.
+	 * This can be used to set multiple headers at once.
+	 *
+	 * @param headers An object whose keys are header names and values are header values
+	 */
+	public static setHeaders(headers: Record<string, string>): Orion {
+		Orion.headers = Object.assign({}, headers);
+		Orion.httpClientConfig = Orion.buildHttpClientConfig();
+
+		return Orion;
+	}
+
+	/**
+	 * Get the currently configured custom headers.
+	 */
+	public static getHeaders(): Record<string, string> {
+		return Object.assign({}, Orion.headers);
+	}
+
 	public static getToken(): string | null {
 		return Orion.token;
 	}
@@ -106,13 +141,16 @@ export class Orion {
 	protected static buildHttpClientConfig(): AxiosRequestConfig {
 		const config: AxiosRequestConfig = {
 			withCredentials: Orion.getAuthDriver() === AuthDriver.Sanctum,
+			headers: {},
 		};
 
+		// Include Authorization header if token is present
 		if (Orion.getToken()) {
-			config.headers = {
-				Authorization: `Bearer ${Orion.getToken()}`,
-			};
+			config.headers!['Authorization'] = `Bearer ${Orion.getToken()}`;
 		}
+
+		// Merge user-defined custom headers (these may override the Authorization header if user chooses)
+		config.headers = Object.assign(config.headers!, Orion.headers);
 
 		return config;
 	}
