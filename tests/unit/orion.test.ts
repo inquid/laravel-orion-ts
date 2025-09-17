@@ -62,4 +62,91 @@ describe('Orion tests', () => {
 
 		expect(Orion.makeHttpClient().getAxios().defaults.baseURL).toBe('https://custom.com');
 	});
+
+	test('setting a single custom header', () => {
+		Orion.clearHeaders();
+		Orion.setHeader('X-Custom-Header', 'test-value');
+
+		expect(Orion.getHeaders()).toEqual({
+			'X-Custom-Header': 'test-value'
+		});
+
+		const config = Orion.getHttpClientConfig();
+		expect(config.headers).toHaveProperty('X-Custom-Header', 'test-value');
+	});
+
+	test('setting multiple custom headers at once', () => {
+		Orion.clearHeaders();
+		Orion.setHeaders({
+			'X-Custom-Header': 'test-value',
+			'X-Another-Header': 'another-value'
+		});
+
+		expect(Orion.getHeaders()).toEqual({
+			'X-Custom-Header': 'test-value',
+			'X-Another-Header': 'another-value'
+		});
+
+		const config = Orion.getHttpClientConfig();
+		expect(config.headers).toHaveProperty('X-Custom-Header', 'test-value');
+		expect(config.headers).toHaveProperty('X-Another-Header', 'another-value');
+	});
+
+	test('adding headers incrementally', () => {
+		Orion.clearHeaders();
+		Orion.setHeader('X-First', 'first');
+		Orion.setHeader('X-Second', 'second');
+
+		expect(Orion.getHeaders()).toEqual({
+			'X-First': 'first',
+			'X-Second': 'second'
+		});
+	});
+
+	test('overwriting existing header', () => {
+		Orion.clearHeaders();
+		Orion.setHeader('X-Custom', 'old-value');
+		Orion.setHeader('X-Custom', 'new-value');
+
+		expect(Orion.getHeaders()['X-Custom']).toBe('new-value');
+	});
+
+	test('clearing all custom headers', () => {
+		Orion.setHeaders({
+			'X-Custom-Header': 'test-value',
+			'X-Another-Header': 'another-value'
+		});
+		Orion.clearHeaders();
+
+		expect(Orion.getHeaders()).toEqual({});
+		
+		const config = Orion.getHttpClientConfig();
+		expect(config.headers).not.toHaveProperty('X-Custom-Header');
+		expect(config.headers).not.toHaveProperty('X-Another-Header');
+	});
+
+	test('custom headers work with authorization token', () => {
+		Orion.clearHeaders();
+		Orion.setToken('test-token');
+		Orion.setHeader('X-Custom-Header', 'test-value');
+
+		const config = Orion.getHttpClientConfig();
+		expect(config.headers).toHaveProperty('Authorization', 'Bearer test-token');
+		expect(config.headers).toHaveProperty('X-Custom-Header', 'test-value');
+	});
+
+	test('method chaining works with header methods', () => {
+		Orion.clearHeaders();
+		const result = Orion.setHeader('X-First', 'first').setHeaders({
+			'X-Second': 'second',
+			'X-Third': 'third'
+		});
+
+		expect(result).toBe(Orion);
+		expect(Orion.getHeaders()).toEqual({
+			'X-First': 'first',
+			'X-Second': 'second',
+			'X-Third': 'third'
+		});
+	});
 });
