@@ -14,3 +14,20 @@ Laravel Orion TypeScript SDK allows you to build expressive frontend application
 ## Official Documentation
 
 Documentation for Laravel Orion and its TypeScript SDK can be found on the [website](https://tailflow.github.io/laravel-orion-docs/).
+
+### Custom request headers
+
+You can set additional headers that will be sent with every request:
+
+```ts
+import { Orion } from '@tailflow/laravel-orion';
+
+// Single header
+Orion.setHeader('x-custom-header', 'header value');
+
+// Multiple headers
+Orion.setHeaders({
+	'x-custom-header': 'header value',
+	'x-custom-header2': 'header value2',
+});
+```

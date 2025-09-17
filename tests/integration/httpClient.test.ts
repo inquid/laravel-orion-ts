@@ -22,4 +22,19 @@ describe('HttpClient tests', () => {
 		const requests = server.pretender.handledRequests;
 		expect(requests[0].requestHeaders['Authorization']).toStrictEqual('Bearer test');
 	});
+
+	test('sending custom headers', async () => {
+		server.schema.posts.create({ title: 'Test Post' });
+
+		Orion.setHeader('x-custom-header', 'header value');
+		Orion.setHeaders({
+			'x-custom-header-2': 'header value 2',
+		});
+
+		await Orion.makeHttpClient().request('/posts', HttpMethod.GET);
+
+		const requests = server.pretender.handledRequests;
+		expect(requests[0].requestHeaders['x-custom-header']).toStrictEqual('header value');
+		expect(requests[0].requestHeaders['x-custom-header-2']).toStrictEqual('header value 2');
+	});
 });
