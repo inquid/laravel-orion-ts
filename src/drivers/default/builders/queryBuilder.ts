@@ -19,6 +19,7 @@ import { Orion } from '../../../orion';
 import { ExtractModelKeyType } from '../../../types/extractModelKeyType';
 import { AggregateItem } from '../../../types/AggregateItem';
 import { ModelRelations } from '../../../types/ModelRelations';
+import { PaginationResponse } from '../../../types/PaginationResponse';
 
 export class QueryBuilder<
 	M extends Model,
@@ -89,6 +90,64 @@ export class QueryBuilder<
 		return response.data.data.map((attributes: AllAttributes & Relations) => {
 			return this.hydrate(attributes, response);
 		});
+	}
+
+	public async paginate(limit: number = 15, page: number = 1): Promise<PaginationResponse<M>> {
+		const response = await this.httpClient.request<{ 
+			data: Array<AllAttributes & Relations>;
+			meta: {
+				total: number;
+				per_page: number;
+				current_page: number;
+				prev_page_url: string | null;
+				next_page_url: string | null;
+			}
+		}>(
+			'/paginate',
+			HttpMethod.GET,
+			this.prepareQueryParams({ limit, page })
+		);
+
+		const items = response.data.data.map((attributes: AllAttributes & Relations) => {
+			return this.hydrate(attributes, response);
+		});
+
+		return {
+			meta: response.data.meta,
+			items
+		};
+	}
+
+	public async searchPaginate(limit: number = 15, page: number = 1): Promise<PaginationResponse<M>> {
+		const response = await this.httpClient.request<{ 
+			data: Array<AllAttributes & Relations>;
+			meta: {
+				total: number;
+				per_page: number;
+				current_page: number;
+				prev_page_url: string | null;
+				next_page_url: string | null;
+			}
+		}>(
+			'/search/paginate',
+			HttpMethod.POST,
+			this.prepareQueryParams({ limit, page }),
+			{
+				scopes: this.scopes,
+				filters: this.filters,
+				search: { value: this.searchValue },
+				sort: this.sorters
+			}
+		);
+
+		const items = response.data.data.map((attributes: AllAttributes & Relations) => {
+			return this.hydrate(attributes, response);
+		});
+
+		return {
+			meta: response.data.meta,
+			items
+		};
 	}
 
 	public async find(key: Key): Promise<M> {
