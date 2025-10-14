@@ -42,4 +42,24 @@ describe('Model tests', () => {
 
 		expect(server.schema.posts.find('1')).toBeNull();
 	});
+
+	test('static pagination method', async () => {
+		// Create 5 posts for testing pagination
+		server.schema.posts.create({ title: 'Test Post A' });
+		server.schema.posts.create({ title: 'Test Post B' });
+		server.schema.posts.create({ title: 'Test Post C' });
+		server.schema.posts.create({ title: 'Test Post D' });
+		server.schema.posts.create({ title: 'Test Post E' });
+
+		const result = await Post.$paginate(2, 1);
+
+		expect(result.items).toHaveLength(2);
+		expect(result.items[0]).toBeInstanceOf(Post);
+		expect(result.items[1]).toBeInstanceOf(Post);
+		expect(result.meta.total).toBe(5);
+		expect(result.meta.per_page).toBe(2);
+		expect(result.meta.current_page).toBe(1);
+		expect(result.meta.prev_page_url).toBeNull();
+		expect(result.meta.next_page_url).toBe('https://api-mock.test/api/posts/paginate?page=2&limit=2');
+	});
 });

@@ -2,6 +2,7 @@ import { QueryBuilder } from './drivers/default/builders/queryBuilder';
 import { ModelConstructor } from './contracts/modelConstructor';
 import { AxiosResponse } from 'axios';
 import { DefaultPersistedAttributes } from './types/defaultPersistedAttributes';
+import { PaginationResponse } from './types/PaginationResponse';
 
 export abstract class Model<
 	Attributes = Record<string, unknown>,
@@ -32,6 +33,14 @@ export abstract class Model<
 
 	public static $query<M extends Model>(this: ModelConstructor<M>): QueryBuilder<M> {
 		return new QueryBuilder<M>(this);
+	}
+
+	public static async $paginate<M extends Model>(
+		this: ModelConstructor<M>,
+		limit: number = 15,
+		page: number = 1
+	): Promise<PaginationResponse<M>> {
+		return new QueryBuilder<M>(this).paginate(limit, page);
 	}
 
 	public $query<M extends Model>(): QueryBuilder<M> {

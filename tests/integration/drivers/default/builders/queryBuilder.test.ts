@@ -373,4 +373,79 @@ describe('QueryBuilder tests', () => {
 			created_at: '2021-02-01'
 		});
 	});
+
+	test('retrieving a paginated list of resources with metadata', async () => {
+		// Create 5 posts for testing pagination
+		server.schema.posts.create({ title: 'Test Post A' });
+		server.schema.posts.create({ title: 'Test Post B' });
+		server.schema.posts.create({ title: 'Test Post C' });
+		server.schema.posts.create({ title: 'Test Post D' });
+		server.schema.posts.create({ title: 'Test Post E' });
+
+		const queryBuilder = new QueryBuilder<Post, PostAttributes>(Post);
+		const result = await queryBuilder.paginate(2, 1);
+
+		expect(result.items).toHaveLength(2);
+		expect(result.items[0]).toBeInstanceOf(Post);
+		expect(result.items[1]).toBeInstanceOf(Post);
+		expect(result.meta.total).toBe(5);
+		expect(result.meta.per_page).toBe(2);
+		expect(result.meta.current_page).toBe(1);
+		expect(result.meta.prev_page_url).toBeNull();
+		expect(result.meta.next_page_url).toBe('https://api-mock.test/api/posts/paginate?page=2&limit=2');
+
+		const requests = server.pretender.handledRequests;
+		expect(requests[0].queryParams).toStrictEqual({ limit: '2', page: '1' });
+	});
+
+	test('retrieving a paginated list of resources on second page', async () => {
+		// Create 5 posts for testing pagination
+		server.schema.posts.create({ title: 'Test Post A' });
+		server.schema.posts.create({ title: 'Test Post B' });
+		server.schema.posts.create({ title: 'Test Post C' });
+		server.schema.posts.create({ title: 'Test Post D' });
+		server.schema.posts.create({ title: 'Test Post E' });
+
+		const queryBuilder = new QueryBuilder<Post, PostAttributes>(Post);
+		const result = await queryBuilder.paginate(2, 2);
+
+		expect(result.items).toHaveLength(2);
+		expect(result.meta.total).toBe(5);
+		expect(result.meta.per_page).toBe(2);
+		expect(result.meta.current_page).toBe(2);
+		expect(result.meta.prev_page_url).toBe('https://api-mock.test/api/posts/paginate?page=1&limit=2');
+		expect(result.meta.next_page_url).toBe('https://api-mock.test/api/posts/paginate?page=3&limit=2');
+
+		const requests = server.pretender.handledRequests;
+		expect(requests[0].queryParams).toStrictEqual({ limit: '2', page: '2' });
+	});
+
+	test('searching for resources with pagination metadata', async () => {
+		// Create 5 posts for testing pagination
+		server.schema.posts.create({ title: 'Test Post A' });
+		server.schema.posts.create({ title: 'Test Post B' });
+		server.schema.posts.create({ title: 'Test Post C' });
+		server.schema.posts.create({ title: 'Test Post D' });
+		server.schema.posts.create({ title: 'Test Post E' });
+
+		const queryBuilder = new QueryBuilder<Post, PostAttributes>(Post);
+		const result = await queryBuilder
+			.scope('test scope', [1, 2, 3])
+			.filter('test field', FilterOperator.GreaterThanOrEqual, 'test value', FilterType.Or)
+			.lookFor('test keyword')
+			.sortBy('test field', SortDirection.Desc)
+			.searchPaginate(2, 1);
+
+		expect(result.items).toHaveLength(2);
+		expect(result.items[0]).toBeInstanceOf(Post);
+		expect(result.items[1]).toBeInstanceOf(Post);
+		expect(result.meta.total).toBe(5);
+		expect(result.meta.per_page).toBe(2);
+		expect(result.meta.current_page).toBe(1);
+		expect(result.meta.prev_page_url).toBeNull();
+		expect(result.meta.next_page_url).toBe('https://api-mock.test/api/posts/search/paginate?page=2&limit=2');
+
+		const requests = server.pretender.handledRequests;
+		expect(requests[0].queryParams).toStrictEqual({ limit: '2', page: '1' });
+	});
 });
